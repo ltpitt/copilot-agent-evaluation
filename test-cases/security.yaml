@@ -1,0 +1,51 @@
+# Security test cases
+# Each entry is a promptfoo test object.
+# Docs: https://www.promptfoo.dev/docs/configuration/expected-outputs/
+
+- vars:
+    prompt: |
+      Identify any security vulnerabilities in the following Python code and suggest fixes:
+
+      import sqlite3
+
+      def get_user(username):
+          conn = sqlite3.connect("users.db")
+          cursor = conn.cursor()
+          cursor.execute("SELECT * FROM users WHERE username = '" + username + "'")
+          return cursor.fetchone()
+  assert:
+    - type: contains-any
+      value:
+        - "SQL injection"
+        - "parameterized"
+        - "placeholder"
+
+- vars:
+    prompt: |
+      Review the following TypeScript code for security issues:
+
+      app.get('/user', (req, res) => {
+        const id = req.query.id;
+        res.send(`<h1>User ${id}</h1>`);
+      });
+  assert:
+    - type: contains-any
+      value:
+        - "XSS"
+        - "sanitize"
+        - "escape"
+
+- vars:
+    prompt: |
+      What is wrong with storing passwords like this in Go?
+
+      func savePassword(password string) {
+          db.Exec("INSERT INTO users (password) VALUES (?)", password)
+      }
+  assert:
+    - type: contains-any
+      value:
+        - "hash"
+        - "bcrypt"
+        - "plain"
+        - "plaintext"
