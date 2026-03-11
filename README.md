@@ -19,9 +19,10 @@ export GITHUB_TOKEN=your_github_token_here
 
 # 3. Run the evaluation
 bash scripts/run-local.sh
-```
 
-The results will open automatically in your browser. You can also run `promptfoo view` at any time to reopen the viewer.
+# 4. View the results in your browser
+promptfoo view
+```
 
 ## Project layout
 

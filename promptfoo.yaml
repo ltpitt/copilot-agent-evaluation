@@ -1,11 +1,12 @@
 # promptfoo configuration
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 # Docs: https://www.promptfoo.dev/docs/getting-started/
 # GitHub provider: https://www.promptfoo.dev/docs/providers/github/
 
 description: GitHub Copilot / GitHub Models evaluation
 
 providers:
-  - id: github:gpt-4o
+  - id: github:openai/gpt-4o
     config:
       # GITHUB_TOKEN must be set in the environment
       temperature: 0.2
