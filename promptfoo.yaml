@@ -5,10 +5,18 @@
 
 description: GitHub Copilot / GitHub Models evaluation
 
+# These are the models being TESTED (they generate the answers).
+# All assertions are currently deterministic (contains / javascript) —
+# no separate grader/judge model is involved.
+# To add LLM-graded assertions (e.g. llm-rubric, factuality), set
+# defaultTest.options.provider below to a separate judge model.
 providers:
   - id: github:openai/gpt-4o
     config:
-      # GITHUB_TOKEN must be set in the environment
+      temperature: 0.2
+  # Adding Claude 4 Sonnet to compare — does it handle the JSON-only test?
+  - id: github:anthropic/claude-4-sonnet
+    config:
       temperature: 0.2
 
 prompts:
@@ -18,3 +26,4 @@ tests:
   - file://test-cases/coding-tasks.yaml
   - file://test-cases/refactoring.yaml
   - file://test-cases/security.yaml
+  - file://test-cases/instruction-following.yaml

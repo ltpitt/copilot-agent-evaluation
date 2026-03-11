@@ -1,2 +1,10 @@
 # Go module cache
 root/
+
+# Secrets and environment files
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
