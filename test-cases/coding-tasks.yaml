@@ -1,0 +1,35 @@
+# Coding-task test cases
+# Each entry is a promptfoo test object.
+# Docs: https://www.promptfoo.dev/docs/configuration/expected-outputs/
+
+- vars:
+    prompt: "Write a Python function that returns the nth Fibonacci number using recursion."
+  assert:
+    - type: contains
+      value: "def "
+    - type: contains
+      value: "return"
+
+- vars:
+    prompt: "Write a TypeScript function that takes an array of numbers and returns the sum."
+  assert:
+    - type: contains
+      value: "function"
+    - type: contains
+      value: "return"
+
+- vars:
+    prompt: "Write a Go function that checks whether a given string is a palindrome."
+  assert:
+    - type: contains
+      value: "func"
+    - type: contains
+      value: "return"
+
+- vars:
+    prompt: "Write a Java method that sorts a list of integers in ascending order."
+  assert:
+    - type: contains
+      value: "void"
+    - type: contains
+      value: "sort"
