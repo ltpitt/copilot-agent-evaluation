@@ -24,13 +24,13 @@ check-token: ## Verify GITHUB_TOKEN is set
 	@echo "✅ GITHUB_TOKEN is set"
 
 eval: check-token ## Run the evaluation (requires GITHUB_TOKEN)
-	npx promptfoo eval --config promptfoo.yaml
+	npx promptfoo@0.120.19 eval --config promptfoo.yaml --output results.json
 
 eval-watch: check-token ## Run evaluation in watch mode
-	npx promptfoo eval --config promptfoo.yaml --watch
+	npx promptfoo@0.120.19 eval --config promptfoo.yaml --watch
 
 view: ## View results in browser (requires previous eval run)
-	npx promptfoo view
+	npx promptfoo@0.120.19 view
 
 clean: ## Remove all evaluation results
 	rm -rf .promptfoo results.json

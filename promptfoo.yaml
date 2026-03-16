@@ -11,11 +11,12 @@ description: GitHub Copilot / GitHub Models evaluation
 # To add LLM-graded assertions (e.g. llm-rubric, factuality), set
 # defaultTest.options.provider below to a separate judge model.
 providers:
-  - id: github:openai/gpt-4o
+  - id: github-nano
+    provider: github:openai/gpt-5-nano
     config:
       temperature: 0.2
-  # Adding Claude 4 Sonnet to compare — does it handle the JSON-only test?
-  - id: github:anthropic/claude-4-sonnet
+  - id: github-mini
+    provider: github:openai/gpt-5-mini
     config:
       temperature: 0.2
 

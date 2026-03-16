@@ -52,7 +52,7 @@ After running `make eval`, promptfoo produces a pass/fail matrix:
 
 ```
 ┌─────────────────────────────────┬────────────┬──────────────────┐
-│ Test                            │ gpt-4o     │ claude-4-sonnet  │
+| Test                            │ gpt-5-nano │ gpt-5-mini       │
 ├─────────────────────────────────┼────────────┼──────────────────┤
 │ Fibonacci (Python)              │ ✅ PASS    │ ✅ PASS          │
 │ Array sum (TypeScript)          │ ✅ PASS    │ ✅ PASS          │

@@ -24,7 +24,7 @@ jobs:
           node-version: "20"
 
       - name: Install promptfoo
-        run: npm install -g promptfoo
+        run: npm install -g promptfoo@0.120.19
 
       - name: Run evaluation
         env:

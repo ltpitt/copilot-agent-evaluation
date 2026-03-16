@@ -59,3 +59,48 @@
         - "printFiltered"
         - "printMatching"
         - "print("
+
+# Fixture-based tests — source: fixtures/Sample.java, fixtures/sample.go
+# These ensure the fixture files are exercised by at least one eval case.
+
+- description: >
+    Fixture (Java): refactor recursive Fibonacci to iterative.
+    Source: fixtures/Sample.java
+  vars:
+    prompt: |
+      Refactor the fibonacci method below to use iteration instead of recursion.
+      Return only the updated method body, no class wrapper needed.
+
+      public static int fibonacci(int n) {
+          if (n <= 1) {
+              return n;
+          }
+          return fibonacci(n - 1) + fibonacci(n - 2);
+      }
+  assert:
+    - type: contains-any
+      value:
+        - "while"
+        - "for"
+    - type: not-contains
+      value: "fibonacci(n - 1)"
+
+- description: >
+    Fixture (Go): refactor recursive Fibonacci to iterative.
+    Source: fixtures/sample.go
+  vars:
+    prompt: |
+      Refactor the Fibonacci function below to use iteration instead of recursion.
+      Keep the same function signature.
+
+      func Fibonacci(n int) int {
+          if n <= 1 {
+              return n
+          }
+          return Fibonacci(n-1) + Fibonacci(n-2)
+      }
+  assert:
+    - type: contains
+      value: "for"
+    - type: not-contains
+      value: "Fibonacci(n-1)"
