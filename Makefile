@@ -26,6 +26,9 @@ check-token: ## Verify GITHUB_TOKEN is set
 eval: check-token ## Run the evaluation (requires GITHUB_TOKEN)
 	npx promptfoo@0.120.19 eval --config promptfoo.yaml --output results.json
 
+eval-no-cache: check-token ## Run evaluation without cache (forces fresh API calls)
+	npx promptfoo@0.120.19 eval --config promptfoo.yaml --output results.json --no-cache
+
 eval-watch: check-token ## Run evaluation in watch mode
 	npx promptfoo@0.120.19 eval --config promptfoo.yaml --watch
 
