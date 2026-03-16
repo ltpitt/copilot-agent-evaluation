@@ -1,10 +1,23 @@
 # copilot-agent-evaluation
 
-Automated quality gates for GitHub Copilot and coding agents.
+> **Making AI evals a habit** — a standard, repeatable way to measure Copilot and coding-agent quality before it reaches your engineers.
 
-Runs deterministic and behavioural evaluations against multiple LLMs using
-[promptfoo](https://www.promptfoo.dev/) — designed for regulated environments
-that require auditability, reproducibility, and regression detection.
+| | |
+|---|---|
+| **What this is** | A standard framework for evaluating GitHub Copilot and other coding agents against quality, safety, and consistency benchmarks. |
+| **Why it matters** | Unreviewed AI output at scale introduces risk. This framework gives engineering teams a consistent signal to safely roll out Copilot with confidence. |
+| **What it outputs** | Scorecards per model and per test category, plus regression detection so you know immediately when an update changes behaviour. |
+| **Time to run** | ~60 seconds for the default test suite (2 models × 4 categories, run in parallel). |
+| **How to adopt** | Fork or use this as a template repository, drop in your own test cases, and wire the included GitHub Actions workflow to run on every push or on a schedule. |
+
+### Why make evals a habit?
+
+Microsoft's [Agent Evaluation guidance](https://adoption.microsoft.com/files/agents/AgentEvaluationEbook.pdf) recommends treating AI evaluation the same way engineering teams treat automated testing: run it continuously, track scores over time, and use regressions as a quality gate. This repository embodies that approach:
+
+- **Continuous** — runs on every pull request and on a scheduled cadence via GitHub Actions.
+- **Comparable** — multiple models are evaluated side-by-side so you can swap providers with data, not gut feeling.
+- **Extensible** — add new test cases in YAML; no code changes required.
+- **Auditable** — results are stored as artifacts and can be published to a dashboard for stakeholder review.
 
 ---
 
