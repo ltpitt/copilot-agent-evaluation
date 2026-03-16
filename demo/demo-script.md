@@ -11,7 +11,7 @@
 > What you are about to see is the seed of an automated quality gate for coding
 > agents. It is a test suite — 13 tests across four categories: code
 > generation, refactoring, security detection, and instruction-following. It
- It runs two models side-by-side — GPT-5 Nano and GPT-5 Mini — and produces a
+ It runs two models side-by-side — GPT-4o and GPT-4o-mini — and produces a
 > pass/fail scoreboard in under five minutes.
 >
 > Right now it runs locally from the IDE. By end of next sprint it runs in CI
