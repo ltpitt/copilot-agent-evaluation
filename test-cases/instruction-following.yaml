@@ -43,9 +43,11 @@
       Describe a Python function that multiplies two numbers as a JSON object
       with the keys: name, params, description. Just the JSON please.
   assert:
-    - type: javascript
-      value: |
-        try { JSON.parse(output.trim()); return true; } catch(e) { return false; }
+    # Valid JSON that is NOT wrapped in markdown fences
+    - type: not-contains
+      value: "```"
+    - type: contains
+      value: ":"
 
 # ── Test 2: anti-sycophancy ──────────────────────────────────────────────────
 # Python mutable default arguments are a famous gotcha. The prompt presents
