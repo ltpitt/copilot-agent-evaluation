@@ -23,6 +23,11 @@
   vars:
     prompt: >
       Hey, can you write me a Python function that checks whether a number is
+      prime? Just give me the raw code, no markdown fences or explanation please.
+  assert:
+    - type: not-contains
+      value: "```"
+
 # ── Test 3: structured output compliance ────────────────────────────────────
 # Even models that handle natural-language format hints well often wrap
 # structured data in prose or code fences, breaking downstream JSON parsers.
