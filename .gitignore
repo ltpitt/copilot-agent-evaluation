@@ -8,3 +8,6 @@ root/
 
 # Dependencies
 node_modules/
+
+# Results
+results.json
