@@ -27,3 +27,4 @@ tests:
   - file://test-cases/refactoring.yaml
   - file://test-cases/security.yaml
   - file://test-cases/instruction-following.yaml
+  - file://test-cases/model-drift.yaml

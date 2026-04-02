@@ -1,0 +1,76 @@
+name: Copilot Agent Evaluation
+
+# Runs on every pull request targeting main.
+#
+# Purpose: catch model drift before it reaches production.
+# Story:   "Yesterday it passed.  After a model update, it fails.
+#           We catch it before production."
+#
+# What this workflow does:
+#   1. Runs the full promptfoo evaluation suite (all test categories).
+#   2. Posts a score summary comment on the PR.
+#   3. Fails the check — blocking the merge — if any assertion fails.
+#
+# Required secrets:
+#   GH_MODELS_TOKEN  — a GitHub PAT with `models:read` scope.
+#                      Used to call the GitHub Models API (promptfoo provider).
+#                      The auto-generated GITHUB_TOKEN does NOT have this scope.
+#
+# The auto-generated GITHUB_TOKEN (available automatically) is used only for
+# posting the PR comment and uploading the results artifact.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write   # required to post the score-summary comment
+
+jobs:
+  evaluate:
+    name: Run evals & post score summary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Run the full evaluation suite.
+      # --no-cache ensures fresh model responses on every run (essential for
+      # catching model drift — a stale cache would hide provider-side changes).
+      # Exit code is non-zero if ANY assertion fails → blocks the merge.
+      - name: Run promptfoo evaluation
+        id: eval
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_TOKEN }}
+        run: |
+          npx --yes promptfoo eval \
+            --config promptfoo.yaml \
+            --output results.json \
+            --no-cache
+
+      # Post a summary comment even when the eval step fails, so engineers
+      # can see exactly which tests regressed without having to download logs.
+      - name: Post score summary to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: node scripts/post-pr-comment.js
+
+      # Persist the full results JSON for traceability and historical comparison.
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.run_id }}
+          path: results.json
+          if-no-files-found: warn

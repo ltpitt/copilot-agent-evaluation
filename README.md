@@ -47,23 +47,69 @@ bash scripts/run-local.sh
 promptfoo view
 ```
 
+## GitHub Actions integration
+
+The included workflow (`.github/workflows/eval.yaml`) runs on every pull request:
+
+1. **Runs the full evaluation suite** — `npx promptfoo eval --no-cache` so every run gets fresh model responses, making it possible to detect provider-side model updates.
+2. **Posts a score summary comment** on the PR so reviewers see pass/fail at a glance without downloading logs.
+3. **Blocks the merge** if any assertion fails (non-zero exit from promptfoo).
+
+### Setup
+
+Add a repository secret named **`GH_MODELS_TOKEN`** — a GitHub PAT with the `models:read` scope.  The auto-generated `GITHUB_TOKEN` does not carry this scope.
+
+The auto-generated `GITHUB_TOKEN` is used automatically for posting PR comments (no extra setup needed).
+
+### Example PR comment
+
+```
+## ✅ Copilot Agent Evaluation
+
+✅ All tests passed — no model drift detected.
+
+| | |
+|---|---|
+| Score | 100% (18/18 passed) |
+```
+
+## Model-drift detection
+
+`test-cases/model-drift.yaml` contains five *drift gates* that guard against the
+three most common silent regressions caused by model updates:
+
+| Gate | Failure mode | Real-world impact |
+|------|-------------|-------------------|
+| Bare-code output | Model wraps bash in `` ``` `` fences | `exec()` receives fence characters and crashes |
+| SQL-injection keyword | Model says "injection flaw" instead of "SQL injection" | String-based security scanner silently stops flagging vulnerabilities |
+| Deprecation signal | Model says "legacy" instead of "deprecated" | PR-review bot stops surfacing deprecation badges |
+| Anti-hallucination | Model invents a plausible-looking but fictional API signature | Engineers copy non-existent API calls into production code |
+| Exact bullet count | Model adds a 4th "bonus" bullet | Slide-generation layout engine throws an index error |
+
+Each test is deterministic (`contains`, `not-contains`, or `javascript`) — no LLM judge required — so results are reproducible and suitable as a hard quality gate.
+
 ## Project layout
 
 ```
 .
-├── promptfoo.yaml          # Main promptfoo configuration
+├── .github/
+│   └── workflows/
+│       └── eval.yaml            # PR check: run evals, post comment, block on failure
+├── promptfoo.yaml               # Main promptfoo configuration
 ├── test-cases/
 │   ├── coding-tasks.yaml        # Code generation / completion prompts
 │   ├── refactoring.yaml         # Code refactoring prompts
 │   ├── security.yaml            # Security-focused prompts
-│   └── instruction-following.yaml  # Instruction-following / format prompts
+│   ├── instruction-following.yaml  # Instruction-following / format prompts
+│   └── model-drift.yaml         # Drift gates: catch model-update regressions on PR
 ├── fixtures/               # Tiny sample source files used by test cases
 │   ├── Sample.java
 │   ├── sample.ts
 │   ├── sample.py
 │   └── sample.go
 └── scripts/
-    └── run-local.sh        # Convenience wrapper around `promptfoo eval`
+    ├── run-local.sh        # Convenience wrapper around `promptfoo eval`
+    └── post-pr-comment.js  # Parses results.json and posts PR score summary
 ```
 
 ## Adding test cases
