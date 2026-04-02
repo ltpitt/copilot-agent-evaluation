@@ -1,125 +1,95 @@
 # copilot-agent-evaluation
 
-> **Making AI evals a habit** — a standard, repeatable way to measure Copilot and coding-agent quality before it reaches your engineers.
+Run automated evaluations against GitHub Copilot and other LLMs using [promptfoo](https://www.promptfoo.dev/). Tests are plain YAML. Results come back in ~60 seconds. The GitHub Actions workflow posts a pass/fail summary on every PR.
 
-## Executive summary
-
-| | |
-|---|---|
-| **What this is** | A standard framework for evaluating GitHub Copilot and other coding agents against quality, safety, and consistency benchmarks. |
-| **Why it matters** | Unreviewed AI output at scale introduces risk. This framework gives engineering leaders a consistent signal so they can safely roll out Copilot to thousands of engineers with confidence. |
-| **What it outputs** | Scorecards per model and per test category, plus regression detection so you know immediately when an update changes behaviour. |
-| **Time to run** | ~60 seconds for the default test suite (2 models × 4 categories, run in parallel). |
-| **How to adopt** | Fork or use this as a template repository, drop in your own test cases, and wire the included GitHub Actions workflow to run on every push or on a schedule. |
-
-### Why make evals a habit?
-
-Microsoft's [Agent Evaluation guidance](https://adoption.microsoft.com/files/agents/AgentEvaluationEbook.pdf) recommends treating AI evaluation the same way engineering teams treat automated testing: run it continuously, track scores over time, and use regressions as a quality gate. This repository embodies that approach:
-
-- **Continuous** — runs on every pull request and on a scheduled cadence via GitHub Actions.
-- **Comparable** — multiple models are evaluated side-by-side so you can swap providers with data, not gut feeling.
-- **Extensible** — add new test cases in YAML; no code changes required.
-- **Auditable** — results are stored as artifacts and can be published to a dashboard for stakeholder review.
-
----
-
-Evaluate GitHub Copilot and other LLMs using [promptfoo](https://www.promptfoo.dev/).
+Think of it as a test suite for your AI models: catches regressions before they affect engineers, and gives you real data when comparing models.
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18+
-- [promptfoo](https://www.promptfoo.dev/docs/getting-started/) installed globally or via npx
-- A GitHub personal access token with `models:read` permission, exported as `GITHUB_TOKEN`
+- A GitHub personal access token with `models:read` scope
 
-## Quickstart
+## Run locally
 
 ```bash
-# 1. Install promptfoo (if not already installed)
-npm install -g promptfoo
+# Export your token
+export GITHUB_TOKEN=your_token_here
 
-# 2. Export your GitHub token
-export GITHUB_TOKEN=your_github_token_here
+# Run all evaluations
+make eval
 
-# 3. Run the evaluation
-bash scripts/run-local.sh
-
-# 4. View the results in your browser
-promptfoo view
+# Open the results in your browser
+make view
 ```
 
-## GitHub Actions integration
+`make help` lists all available targets.
 
-The included workflow (`.github/workflows/eval.yaml`) runs on every pull request:
+## Run via GitHub Actions
 
-1. **Runs the full evaluation suite** — `npx promptfoo eval --no-cache` so every run gets fresh model responses, making it possible to detect provider-side model updates.
-2. **Posts a score summary comment** on the PR so reviewers see pass/fail at a glance without downloading logs.
-3. **Blocks the merge** if any assertion fails (non-zero exit from promptfoo).
+The workflow in `.github/workflows/eval.yaml` triggers on every PR to `main`. It runs the full test suite, posts a score summary comment on the PR, and fails the check if any assertion fails — blocking the merge.
 
-### Setup
+**One-time setup:** add a repository secret named `GH_MODELS_TOKEN` — a GitHub PAT with the `models:read` scope. Go to **Settings → Secrets and variables → Actions → New repository secret**.
 
-Add a repository secret named **`GH_MODELS_TOKEN`** — a GitHub PAT with the `models:read` scope.  The auto-generated `GITHUB_TOKEN` does not carry this scope.
+The built-in `GITHUB_TOKEN` (auto-available in every workflow) is used automatically to post PR comments; no extra setup needed for that.
 
-The auto-generated `GITHUB_TOKEN` is used automatically for posting PR comments (no extra setup needed).
+That's it. Push a PR and the workflow runs.
 
-### Example PR comment
+## What gets tested
 
+| File | What it covers |
+|------|---------------|
+| `test-cases/coding-tasks.yaml` | Code generation in Python, TypeScript, Go, Java |
+| `test-cases/refactoring.yaml` | Code improvement and cleanup prompts |
+| `test-cases/security.yaml` | Security-aware responses |
+| `test-cases/instruction-following.yaml` | Output format and instruction compliance |
+| `test-cases/model-drift.yaml` | Regression gates — catch silent changes after a model update |
+
+### What model-drift tests catch
+
+LLM providers update models silently. A response that passed yesterday can fail today with no code change on your side. The drift gates in `model-drift.yaml` cover exactly this:
+
+| Gate | What breaks if it regresses |
+|------|-----------------------------|
+| Bare-code output | `exec()` receives markdown fences and crashes |
+| SQL-injection keyword | String-based security scanners stop flagging issues |
+| Deprecation signal | PR bots stop surfacing deprecation warnings |
+| Anti-hallucination | Non-existent APIs get copied into production code |
+| Exact bullet count | Layout engines throw index errors on unexpected output length |
+
+All assertions are deterministic (`contains`, `not-contains`, `javascript`) — no LLM judge, fully reproducible.
+
+## Adding your own test cases
+
+Add entries to any YAML file under `test-cases/`, or create a new file and reference it in `promptfoo.yaml` under the `tests` key. No code changes required.
+
+Each entry looks like this:
+
+```yaml
+- vars:
+    prompt: "Your prompt here"
+  assert:
+    - type: contains
+      value: "expected string"
 ```
-## ✅ Copilot Agent Evaluation
 
-✅ All tests passed — no model drift detected.
-
-| | |
-|---|---|
-| Score | 100% (18/18 passed) |
-```
-
-## Model-drift detection
-
-`test-cases/model-drift.yaml` contains five *drift gates* that guard against the
-three most common silent regressions caused by model updates:
-
-| Gate | Failure mode | Real-world impact |
-|------|-------------|-------------------|
-| Bare-code output | Model wraps bash in `` ``` `` fences | `exec()` receives fence characters and crashes |
-| SQL-injection keyword | Model says "injection flaw" instead of "SQL injection" | String-based security scanner silently stops flagging vulnerabilities |
-| Deprecation signal | Model says "legacy" instead of "deprecated" | PR-review bot stops surfacing deprecation badges |
-| Anti-hallucination | Model invents a plausible-looking but fictional API signature | Engineers copy non-existent API calls into production code |
-| Exact bullet count | Model adds a 4th "bonus" bullet | Slide-generation layout engine throws an index error |
-
-Each test is deterministic (`contains`, `not-contains`, or `javascript`) — no LLM judge required — so results are reproducible and suitable as a hard quality gate.
+See the [promptfoo assertion docs](https://www.promptfoo.dev/docs/configuration/expected-outputs/) for the full list of assertion types.
 
 ## Project layout
 
 ```
 .
-├── .github/
-│   └── workflows/
-│       └── eval.yaml            # PR check: run evals, post comment, block on failure
-├── promptfoo.yaml               # Main promptfoo configuration
-├── test-cases/
-│   ├── coding-tasks.yaml        # Code generation / completion prompts
-│   ├── refactoring.yaml         # Code refactoring prompts
-│   ├── security.yaml            # Security-focused prompts
-│   ├── instruction-following.yaml  # Instruction-following / format prompts
-│   └── model-drift.yaml         # Drift gates: catch model-update regressions on PR
-├── fixtures/               # Tiny sample source files used by test cases
-│   ├── Sample.java
-│   ├── sample.ts
-│   ├── sample.py
-│   └── sample.go
+├── .github/workflows/eval.yaml      # PR check: run evals, post comment, block on failure
+├── promptfoo.yaml                   # Models and test file references
+├── test-cases/                      # All test cases, one category per file
+├── fixtures/                        # Sample source files referenced by test cases
 └── scripts/
-    ├── run-local.sh        # Convenience wrapper around `promptfoo eval`
-    └── post-pr-comment.js  # Parses results.json and posts PR score summary
+    ├── run-local.sh                 # Thin wrapper around `promptfoo eval`
+    └── post-pr-comment.js           # Parses results.json, posts PR summary comment
 ```
-
-## Adding test cases
-
-Each YAML file under `test-cases/` is a list of promptfoo test objects.
-They are referenced from `promptfoo.yaml` via the `tests` key.  Add a new entry to
-the appropriate file, or create a new file and reference it in `promptfoo.yaml`.
 
 ## References
 
-- [promptfoo documentation](https://www.promptfoo.dev/docs/getting-started/)
-- [promptfoo GitHub provider](https://www.promptfoo.dev/docs/providers/github/)
+- [promptfoo docs](https://www.promptfoo.dev/docs/getting-started/)
+- [promptfoo GitHub Models provider](https://www.promptfoo.dev/docs/providers/github/)
+- [GitHub Models](https://github.com/marketplace/models)
 
