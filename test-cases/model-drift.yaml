@@ -1,0 +1,120 @@
+# Model-drift test cases
+# Story: "Yesterday it passed. After a model update, it fails. We catch it before production."
+#
+# These tests guard against the three most common silent regressions caused by
+# model updates (Microsoft Copilot Studio evaluation guidance calls these out
+# explicitly — responses CAN change with every model rollout):
+#
+#   1. Format drift    — model starts/stops wrapping output in markdown fences
+#   2. Keyword drift   — model switches terminology, breaking string-matching gates
+#   3. Hallucination   — model invents confident answers for non-existent identifiers
+#
+# Every test below maps to a real-world failure mode documented in the
+# "agent variability and drift" literature.  When one of these gates flips from
+# PASS to FAIL on a PR, the CI comment will say so before anyone merges.
+
+# ── Gate 1: bare-code output ────────────────────────────────────────────────
+# Contract: downstream CI script calls exec() on the raw model response.
+# Failure: after a model rollout, the model began wrapping bash in ```...```
+# fences — exec() received "```bash\nrm -rf …\n```" and crashed.
+# This gate was added the day after that incident.
+- description: >
+    [Drift gate 1 — format] Bare-code output: model must NOT wrap the command
+    in markdown fences. exec() on the raw response is the production contract;
+    a fence character breaks it silently.
+  vars:
+    prompt: >
+      Write a single bash one-liner that lists all .log files modified in the
+      last 24 hours. Output only the command, nothing else.
+  assert:
+    - type: not-contains
+      value: "```"
+
+# ── Gate 2: SQL-injection terminology ───────────────────────────────────────
+# Contract: the security scanner greps for the exact phrase "SQL injection".
+# Failure: a model update switched phrasing to "injection vulnerability" and
+# "sanitized input" — both correct, but the scanner keyword never fired.
+# Three PRs with vulnerable code merged undetected before the gap was caught.
+- description: >
+    [Drift gate 2 — keyword] SQL injection signal: model must use the exact
+    phrase "SQL injection". Downstream security scanners rely on this string;
+    semantically-equivalent synonyms ("injection flaw", "unsanitised input")
+    cause the gate to miss vulnerable code silently.
+  vars:
+    prompt: |
+      Is the following Python code safe? Explain any security issues.
+
+      def get_user(uid):
+          db.execute("SELECT * FROM users WHERE id = " + uid)
+  assert:
+    - type: contains
+      value: "SQL injection"
+
+# ── Gate 3: deprecation signal ──────────────────────────────────────────────
+# Contract: the PR-review bot surfaces a "⚠️ deprecated API" badge when the
+# model response contains the word "deprecated".
+# Failure: after fine-tuning on newer corpora, the model began writing "legacy"
+# and "no longer recommended" — triggering zero badges on real deprecations.
+- description: >
+    [Drift gate 3 — keyword] Deprecation signal: model must use the word
+    "deprecated" when reviewing usage of Python 2-era APIs. The PR review
+    bot keys on this exact word; synonyms ("legacy", "outdated") cause
+    silent misses in the automated code-review pipeline.
+  vars:
+    prompt: |
+      Review this Python code and flag any issues:
+
+      import imp
+      mod = imp.load_source('mymodule', '/path/to/mymodule.py')
+  assert:
+    - type: contains
+      value: "deprecated"
+
+# ── Gate 4: anti-hallucination ───────────────────────────────────────────────
+# Contract: the agent must express uncertainty for unknown identifiers.
+# Failure: after a model update trained on more synthetic code, the model
+# began generating plausible but entirely fabricated API signatures for
+# non-existent functions.  Junior engineers copy-pasted them into production.
+- description: >
+    [Drift gate 4 — hallucination] No confident answer for a non-existent API:
+    model must express uncertainty rather than invent documentation for
+    `github.copilot.internal.predictNextLine()`. This gate was added after a
+    model update caused fabricated API docs to ship to production.
+  vars:
+    prompt: >
+      What does the function `github.copilot.internal.predictNextLine()` do?
+      Give me its full signature and return type.
+  assert:
+    - type: contains-any
+      value:
+        - "don't have information"
+        - "not aware"
+        - "doesn't exist"
+        - "cannot find"
+        - "no such"
+        - "not familiar"
+        - "don't recognize"
+        - "can't find"
+        - "not a real"
+        - "unfamiliar"
+        - "not exist"
+        - "no information"
+
+# ── Gate 5: exact structured-output count ────────────────────────────────────
+# Contract: slide-generation pipeline slices exactly 3 bullet lines from the
+# response and maps them to 3 slide placeholders.
+# Failure: model update added a 4th "bonus" bullet for completeness — the
+# layout engine received an unexpected 4th item and threw an index error.
+- description: >
+    [Drift gate 5 — format] Exactly 3 bullet points: a slide-generation pipeline
+    expects exactly 3 lines starting with "- ". A model that adds an extra
+    "bonus" bullet for helpfulness breaks the layout template silently.
+  vars:
+    prompt: >
+      List exactly 3 benefits of code review. Use bullet points starting with
+      "- ". Output only the 3 bullets, no intro or closing sentence.
+  assert:
+    - type: javascript
+      value: |
+        const lines = output.trim().split('\n').filter(l => l.trim().startsWith('- '));
+        return lines.length === 3;
