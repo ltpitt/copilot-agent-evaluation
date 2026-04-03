@@ -23,6 +23,7 @@ prompts:
 
 tests:
   - file://test-cases/coding-tasks.yaml
+  - file://test-cases/regression-detection.yaml
   - file://test-cases/refactoring.yaml
   - file://test-cases/security.yaml
   - file://test-cases/instruction-following.yaml
