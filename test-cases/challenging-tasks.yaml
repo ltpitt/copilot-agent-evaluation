@@ -1,0 +1,64 @@
+# Challenging test cases - tests edge cases and complex requirements
+# These require deeper reasoning and understanding of algorithm complexity
+
+- vars:
+    prompt: "Write a Python function that implements a binary search algorithm on a sorted array. Include proper error handling for edge cases."
+  assert:
+    - type: contains
+      value: "def "
+    - type: contains
+      value: "binary"
+    - type: contains
+      value: "while"
+    - type: javascript
+      value: "output.includes('low') && output.includes('high')"
+
+- vars:
+    prompt: "Implement a LRU (Least Recently Used) cache in Python with O(1) get and put operations."
+  assert:
+    - type: contains
+      value: "class"
+    - type: contains
+      value: "def __init__"
+    - type: javascript
+      value: "output.includes('OrderedDict') || output.includes('deque') || output.includes('dict')"
+
+- vars:
+    prompt: "Write a TypeScript function that detects if a linked list has a cycle using Floyd's cycle detection algorithm."
+  assert:
+    - type: contains
+      value: "function"
+    - type: contains
+      value: "slow"
+    - type: contains
+      value: "fast"
+
+- vars:
+    prompt: "Implement a trie data structure in Java with insert, search, and prefix search operations."
+  assert:
+    - type: contains
+      value: "class"
+    - type: contains
+      value: "TrieNode"
+    - type: javascript
+      value: "output.includes('children') || output.includes('HashMap') || output.includes('map')"
+
+- vars:
+    prompt: "Write a Go function that implements the merge sort algorithm with proper handling of concurrent sorting for large arrays."
+  assert:
+    - type: contains
+      value: "func"
+    - type: contains
+      value: "merge"
+    - type: contains
+      value: "sort"
+
+- vars:
+    prompt: "Implement a solution to the N-Queens problem in Python that returns all valid board configurations."
+  assert:
+    - type: contains
+      value: "def "
+    - type: contains
+      value: "backtrack"
+    - type: javascript
+      value: "output.length > 200"  # Non-trivial solution should be substantial
