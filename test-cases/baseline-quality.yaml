@@ -1,0 +1,54 @@
+# Baseline quality tests - verifies that all models maintain minimum output quality
+# These are intentionally broad to catch when models degrade at fundamental level
+
+- vars:
+    prompt: "Explain what a REST API is and give an example."
+  assert:
+    - type: contains
+      value: "API"
+    - type: javascript
+      value: "output.length > 50"
+
+- vars:
+    prompt: "What are the three main principles of OOP?"
+  assert:
+    - type: contains
+      value: "inheritance"
+    - type: javascript
+      value: "output.split(' ').length > 20"
+
+- vars:
+    prompt: "Describe the difference between SQL and NoSQL databases."
+  assert:
+    - type: contains
+      value: "SQL"
+    - type: contains
+      value: "NoSQL"
+    - type: javascript
+      value: "output.includes('structured') || output.includes('relational') || output.includes('schema')"
+
+- vars:
+    prompt: "What is Git and why is it used in software development?"
+  assert:
+    - type: contains
+      value: "version"
+    - type: javascript
+      value: "output.includes('control') || output.includes('history') || output.includes('collaboration')"
+
+- vars:
+    prompt: "Explain the difference between async/await and Promises in JavaScript."
+  assert:
+    - type: contains
+      value: "Promise"
+    - type: contains
+      value: "async"
+    - type: javascript
+      value: "output.length > 100"
+
+- vars:
+    prompt: "What is Docker and what problem does it solve?"
+  assert:
+    - type: contains
+      value: "container"
+    - type: javascript
+      value: "output.includes('isolation') || output.includes('consistency') || output.includes('deploy')"
