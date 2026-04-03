@@ -14,9 +14,13 @@ providers:
   - id: github:openai/gpt-4o
     config:
       temperature: 0.2
+      # Hard cap per API call: prevents a single stalled request from blocking
+      # the entire evaluation run (value in milliseconds).
+      timeout: 30000
   - id: github:openai/gpt-4o-mini
     config:
       temperature: 0.2
+      timeout: 30000
 
 prompts:
   - "{{prompt}}"

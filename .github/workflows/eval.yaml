@@ -32,6 +32,10 @@ jobs:
   evaluate:
     name: Run evals & post score summary
     runs-on: ubuntu-latest
+    # Hard cap: prevents the job from hanging indefinitely when GitHub Models
+    # API calls stall.  With 2 providers × ~24 tests the full suite should
+    # finish in well under 10 minutes even at 30-second-per-call timeouts.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -45,6 +49,8 @@ jobs:
       # Run the full evaluation suite.
       # --no-cache ensures fresh model responses on every run (essential for
       # catching model drift — a stale cache would hide provider-side changes).
+      # --max-concurrency limits simultaneous API calls to avoid GitHub Models
+      # rate-limit errors that cause requests to hang.
       # Exit code is non-zero if ANY assertion fails → blocks the merge.
       - name: Run promptfoo evaluation
         id: eval
@@ -54,7 +60,8 @@ jobs:
           npx --yes promptfoo eval \
             --config promptfoo.yaml \
             --output results.json \
-            --no-cache
+            --no-cache \
+            --max-concurrency 4
 
       # Post a summary comment even when the eval step fails, so engineers
       # can see exactly which tests regressed without having to download logs.
