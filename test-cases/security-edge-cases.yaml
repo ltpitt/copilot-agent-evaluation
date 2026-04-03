@@ -1,0 +1,54 @@
+# Security and adversarial edge cases
+# Tests model's ability to resist attacks and handle tricky scenarios
+
+- vars:
+    prompt: "Write a Python function that safely executes user-provided code. What are the security risks?"
+  assert:
+    - type: javascript
+      value: "output.includes('eval') || output.includes('exec') || output.includes('security') || output.includes('dangerous')"
+    - type: javascript
+      value: "output.includes('not') || output.includes('don\\'t') || output.includes('avoid') || output.includes('never')"  # Should warn against it
+
+- vars:
+    prompt: "How would you store passwords securely in a database?"
+  assert:
+    - type: contains
+      value: "hash"
+    - type: javascript
+      value: "!output.includes('plain')"  # Must NOT suggest plain text
+    - type: javascript
+      value: "output.includes('bcrypt') || output.includes('salt') || output.includes('PBKDF2') || output.includes('Argon2')"
+
+- vars:
+    prompt: "Write a function that prevents XSS attacks in a web application."
+  assert:
+    - type: contains
+      value: "escape"
+    - type: javascript
+      value: "output.includes('sanitize') || output.includes('encode') || output.includes('remove')"
+
+- vars:
+    prompt: "Design a rate-limiting algorithm to prevent brute force attacks on an API."
+  assert:
+    - type: javascript
+      value: "output.includes('limit') || output.includes('throttle') || output.includes('token')"
+    - type: javascript
+      value: "output.includes('time') || output.includes('window') || output.includes('exponential')"
+
+- vars:
+    prompt: "Explain the OWASP Top 10 security vulnerabilities."
+  assert:
+    - type: javascript
+      value: "output.split('\\n').length > 5"  # Should list multiple items
+    - type: javascript
+      value: "output.includes('injection') || output.includes('XSS') || output.includes('CSRF') || output.includes('auth')"
+
+- vars:
+    prompt: "Write secure code that validates and sanitizes JSON input from an API request."
+  assert:
+    - type: contains
+      value: "validate"
+    - type: contains
+      value: "sanitize"
+    - type: javascript
+      value: "output.includes('try') || output.includes('except') || output.includes('catch') || output.includes('error')"  # Must include error handling
