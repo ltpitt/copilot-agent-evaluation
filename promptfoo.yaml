@@ -14,8 +14,7 @@ providers:
   - id: github:openai/gpt-4o
     config:
       temperature: 0.2
-  # Adding Claude 4 Sonnet to compare — does it handle the JSON-only test?
-  - id: github:anthropic/claude-4-sonnet
+  - id: github:openai/gpt-4o-mini
     config:
       temperature: 0.2
 
