@@ -1,0 +1,62 @@
+# Regression detection test - intentionally strict requirements
+# This demonstrates how the pipeline catches model degradation.
+# Note: These tests are designed to be challenging and may reveal edge cases
+# where models struggle with specific requirements.
+
+- vars:
+    prompt: "Write a Python function that returns the nth Fibonacci number using recursion."
+  assert:
+    - type: contains
+      value: "def "
+    - type: contains
+      value: "return"
+    - type: contains
+      value: "if"  # Must include conditional for base case
+    - type: javascript
+      value: "output.includes('n < 2') || output.includes('n <= 1')"  # Specific base case check
+
+- vars:
+    prompt: "Write a TypeScript function that takes an array of numbers and returns the sum."
+  assert:
+    - type: contains
+      value: "function"
+    - type: contains
+      value: "return"
+    - type: javascript
+      value: "output.includes('reduce') || output.includes('for') || output.includes('forEach')"  # Must use iteration
+
+- vars:
+    prompt: "Refactor this code to use modern JavaScript patterns: var x = 1; var y = 2; console.log(x + y);"
+  assert:
+    - type: contains
+      value: "const"  # Must use const (not var)
+    - type: contains
+      value: "console.log"
+    - type: javascript
+      value: "!output.includes('var ')"  # Must NOT use var keyword
+
+- vars:
+    prompt: "Write a secure API endpoint in Python that validates user input and sanitizes it."
+  assert:
+    - type: contains
+      value: "def "
+    - type: contains
+      value: "validate"
+    - type: javascript
+      value: "output.includes('strip') || output.includes('sanitize') || output.includes('filter') || output.includes('escape')"  # Must mention sanitization
+
+- vars:
+    prompt: "Create a SQL query that retrieves all users and prevents SQL injection."
+  assert:
+    - type: contains
+      value: "SELECT"
+    - type: javascript
+      value: "output.includes('?') || output.includes('prepared') || output.includes('parameterized')"  # Must use parameterized queries
+
+- vars:
+    prompt: "Write a Python class that implements the Singleton pattern correctly."
+  assert:
+    - type: contains
+      value: "class"
+    - type: javascript
+      value: "output.includes('__new__') || output.includes('__init__') && output.includes('_instance')"  # Must show proper singleton implementation
