@@ -5,11 +5,9 @@
 
 description: GitHub Copilot / GitHub Models evaluation
 
-# These are the models being TESTED (they generate the answers).
-# All assertions are currently deterministic (contains / javascript) —
-# no separate grader/judge model is involved.
-# To add LLM-graded assertions (e.g. llm-rubric, factuality), set
-# defaultTest.options.provider below to a separate judge model.
+# Models being TESTED (they generate the answers).
+# For LLM-graded assertions (llm-rubric), gpt-4o-mini is used as the
+# judge model via defaultTest.options.provider — it's free-tier and fast.
 providers:
   - id: github:openai/gpt-4o
     config:
@@ -18,10 +16,20 @@ providers:
     config:
       temperature: 0.2
 
+# Judge model for llm-rubric assertions (prompt quality tests).
+# This model evaluates whether prompts follow best practices.
+# Using gpt-4o-mini keeps costs at zero while providing good judgment.
+defaultTest:
+  options:
+    provider: github:openai/gpt-4o-mini
+
 prompts:
   - "{{prompt}}"
 
 tests:
+  # Prompt quality gate — evaluates prompt quality BEFORE output quality
+  - file://test-cases/prompt-quality.yaml
+  # Output quality — evaluates model responses
   - file://test-cases/coding-tasks.yaml
   - file://test-cases/refactoring.yaml
   - file://test-cases/security.yaml

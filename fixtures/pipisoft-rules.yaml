@@ -1,0 +1,94 @@
+# Pipisoft Company Rules
+# This file defines company-specific agents, skills, and prompt requirements.
+# It is loaded as context into the prompt quality rubric.
+#
+# To adapt for your company:
+#   1. Replace agent names and skills with your own
+#   2. Update the prompt_requirements section
+#   3. Add examples that match your workflows
+
+company: Pipisoft
+
+agents:
+  - name: "@pipisoft-codebot"
+    description: "Code review, generation, and refactoring agent"
+    skills:
+      - id: code-review
+        description: "Reviews code for bugs, style, and security issues"
+        required_context:
+          - "source code or file path"
+          - "programming language"
+
+      - id: test-generation
+        description: "Generates unit and integration tests"
+        required_context:
+          - "source code or function to test"
+          - "testing framework preference"
+
+      - id: refactor
+        description: "Refactors code for readability, performance, or patterns"
+        required_context:
+          - "source code to refactor"
+          - "refactoring goal"
+
+prompt_requirements:
+  # Universal best practices (from Claude / Copilot documentation)
+  universal:
+    - id: clarity
+      rule: "Prompt must clearly state what the user wants"
+      bad_signals:
+        - "fix this"
+        - "make it better"
+        - "help me"
+        - "do something"
+
+    - id: specificity
+      rule: "Prompt must include specific details about the task"
+      bad_signals:
+        - "some code"
+        - "a function"
+        - "something like"
+
+    - id: context
+      rule: "Prompt should provide relevant context (language, framework, constraints)"
+
+    - id: format
+      rule: "Prompt should specify desired output format when it matters"
+
+    - id: length
+      rule: "Prompt length should match task complexity (not too short for complex tasks, not too long for simple ones)"
+
+  # Company-specific rules
+  company:
+    - id: agent-routing
+      rule: "When using Pipisoft agents, prompt MUST reference the agent by name (@pipisoft-codebot)"
+
+    - id: skill-selection
+      rule: "When using a Pipisoft agent, prompt SHOULD specify the skill (e.g. /code-review, /test-generation, /refactor)"
+
+    - id: context-for-skill
+      rule: "Each skill has required context (see agent definitions above). The prompt should include it."
+
+examples:
+  good:
+    - prompt: "@pipisoft-codebot /code-review Review this Python Flask endpoint for SQL injection vulnerabilities:\n\n```python\n@app.route('/users')\ndef get_users():\n    name = request.args.get('name')\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    return db.execute(query)\n```"
+      why: "References agent, specifies skill, includes source code, states specific concern (SQL injection)"
+
+    - prompt: "@pipisoft-codebot /test-generation Generate pytest unit tests for the following authentication module. Use pytest fixtures and parametrize for edge cases.\n\n```python\ndef authenticate(username, password):\n    user = db.find_user(username)\n    if not user:\n        raise UserNotFoundError(username)\n    if not verify_hash(password, user.password_hash):\n        raise InvalidCredentialsError()\n    return create_session(user)\n```"
+      why: "References agent, specifies skill, includes code, specifies framework (pytest) and techniques (fixtures, parametrize)"
+
+    - prompt: "@pipisoft-codebot /refactor Refactor this JavaScript function to use async/await instead of Promise chains. Maintain the same error handling behavior.\n\n```javascript\nfunction fetchUserData(userId) {\n  return fetch(`/api/users/${userId}`)\n    .then(res => res.json())\n    .then(data => processUser(data))\n    .catch(err => logError(err));\n}\n```"
+      why: "References agent, specifies skill, includes code, states goal (async/await) and constraint (same error handling)"
+
+  bad:
+    - prompt: "fix the code"
+      why: "No context, no specificity, no agent reference, no code provided"
+
+    - prompt: "review my code please"
+      why: "No agent reference, no skill, no code attached, vague request"
+
+    - prompt: "write some tests"
+      why: "No agent, no skill, no code to test, no framework preference, completely vague"
+
+    - prompt: "make it faster"
+      why: "No context about what 'it' is, no code, no performance metrics, no constraints"

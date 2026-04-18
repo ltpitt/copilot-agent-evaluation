@@ -1,0 +1,166 @@
+# Prompt Quality Gate — Test Cases
+#
+# These tests evaluate PROMPT QUALITY indirectly through output quality.
+# When a prompt is well-structured, the model produces a complete, actionable
+# response. When a prompt is vague or missing context, the model can only
+# ask for clarification or produce generic filler.
+#
+# The judge model (gpt-4o-mini) evaluates model responses via llm-rubric:
+#   Good prompt → specific, complete response → PASS
+#   Bad prompt  → vague, clarification-seeking response → FAIL
+#
+# This mirrors real-world impact: bad prompts waste tokens and produce
+# unusable outputs. The quality gate catches this at PR time.
+
+# ---------------------------------------------------------------------------
+# GOOD PROMPTS — these produce complete, actionable responses (should PASS)
+# ---------------------------------------------------------------------------
+
+- vars:
+    prompt: >
+      @pipisoft-codebot /code-review
+      Review this Python Flask endpoint for SQL injection vulnerabilities.
+      The endpoint accepts a user-provided name parameter and queries the database directly.
+
+      ```python
+      @app.route('/users')
+      def get_users():
+          name = request.args.get('name')
+          query = f"SELECT * FROM users WHERE name = '{name}'"
+          return db.execute(query)
+      ```
+  assert:
+    - type: llm-rubric
+      value: >
+        The response must be a specific, actionable code review that identifies
+        the SQL injection vulnerability in the Flask endpoint. It should explain
+        the risk and suggest a fix (e.g. parameterized queries). A complete
+        response demonstrates the prompt was well-crafted. PASS if the response
+        is specific and actionable with concrete security advice.
+
+- vars:
+    prompt: >
+      @pipisoft-codebot /test-generation
+      Generate pytest unit tests for this authentication function.
+      Use pytest fixtures for database mocking and parametrize for edge cases
+      (empty password, special characters, very long strings).
+
+      ```python
+      def authenticate(username, password):
+          user = db.find_user(username)
+          if not user:
+              raise UserNotFoundError(username)
+          if not verify_hash(password, user.password_hash):
+              raise InvalidCredentialsError()
+          return create_session(user)
+      ```
+  assert:
+    - type: llm-rubric
+      value: >
+        The response must contain actual pytest test code with fixtures and
+        parametrize decorators. It should cover the happy path and edge cases
+        (empty password, special characters, long strings, user not found).
+        PASS if the response contains runnable test code. FAIL if the response
+        is generic advice without actual test implementations.
+
+- vars:
+    prompt: >
+      @pipisoft-codebot /refactor
+      Refactor this JavaScript function to use async/await instead of Promise chains.
+      Keep the same error handling behavior. The function is used in a Node.js Express
+      middleware that handles user authentication.
+
+      ```javascript
+      function fetchUserData(userId) {
+        return fetch(`/api/users/${userId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+          .then(data => processUser(data))
+          .catch(err => { logError(err); throw err; });
+      }
+      ```
+  assert:
+    - type: llm-rubric
+      value: >
+        The response must contain refactored JavaScript code using async/await
+        syntax instead of .then() chains. It should preserve the error handling
+        (try/catch replacing .catch()). PASS if the response contains complete
+        refactored code with async/await. FAIL if it only gives advice without
+        actual refactored code.
+
+# ---------------------------------------------------------------------------
+# BAD PROMPTS — these produce vague, clarification-seeking responses (should FAIL)
+# ---------------------------------------------------------------------------
+
+- vars:
+    prompt: "fix the code"
+  assert:
+    - type: llm-rubric
+      value: >
+        The response should be a complete, specific code fix with actual corrected
+        code. FAIL if the response asks for clarification, requests more context,
+        or says "please provide the code" — that means the original prompt was
+        too vague to produce useful output.
+
+- vars:
+    prompt: "review my code please"
+  assert:
+    - type: llm-rubric
+      value: >
+        The response should be a detailed code review with specific findings,
+        line-by-line analysis, and actionable suggestions. FAIL if the response
+        asks the user to share their code first or requests more information —
+        that means the prompt lacked the necessary context.
+
+- vars:
+    prompt: "write some tests"
+  assert:
+    - type: llm-rubric
+      value: >
+        The response should contain actual, runnable test code for a specific
+        function or module. FAIL if the response asks what to test, which
+        framework to use, or requests the source code — that means the prompt
+        was too vague to produce useful output.
+
+- vars:
+    prompt: "make it faster"
+  assert:
+    - type: llm-rubric
+      value: >
+        The response should contain specific performance optimizations with
+        actual optimized code. FAIL if the response asks what "it" is, requests
+        code to optimize, or gives only generic performance advice — that means
+        the prompt lacked necessary context.
+
+# ---------------------------------------------------------------------------
+# EDGE CASES — partially good prompts
+# ---------------------------------------------------------------------------
+
+- vars:
+    prompt: >
+      Write a Python function that sorts a list of dictionaries by a specific key.
+      The function should handle missing keys gracefully and support both ascending
+      and descending order.
+  assert:
+    - type: llm-rubric
+      value: >
+        The response must contain a complete Python function that sorts a list
+        of dictionaries by key, handles missing keys, and supports ascending
+        and descending order. PASS if the response contains working code that
+        addresses all three requirements. This is a well-specified prompt even
+        without company agent routing.
+
+- vars:
+    prompt: >
+      @pipisoft-codebot /code-review
+      Check this for bugs.
+  assert:
+    - type: llm-rubric
+      value: >
+        The response should be a thorough code review identifying specific bugs
+        with line references and fix suggestions. FAIL if the response asks the
+        user to provide code or says it cannot review without seeing code — that
+        means the prompt referenced the right tool but forgot to include the
+        actual code to review.
